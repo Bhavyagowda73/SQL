@@ -1,0 +1,74 @@
+--adding new column called 'Age' to calculate age of HR
+ALTER TABLE [projects].dbo.[Human Resources] ADD COLUMN age INT;
+UPDATE [projects].dbo.[Human Resources] SET age=
+DATEDIFF(YEAR,CONVERT(DATE,birthdate),GETDATE())
+
+--Gender brekadown of Employee in the company
+SELECT gender,COUNT(DISTINCT id) AS count
+FROM [projects].dbo.[Human Resources]
+GROUP BY gender
+
+--distribution of employees by age
+SELECT age_group,count(id) AS count FROM(
+SELECT CASE WHEN age>18 and age<= 25 THEN  '18-25'
+            WHEN age>25 and age<= 40 THEN  '26-40'
+			WHEN age>40 and age<= 50 THEN  '41-50'
+			WHEN age>50 and age<= 60 THEN  '51-60'
+			ELSE '60+' END AS age_group,
+			id
+FROM [projects].dbo.[Human Resources]) AS t
+GROUP BY age_group
+
+--distribution of employees by age and gender
+SELECT age_group,gender,count(id) AS count FROM(
+SELECT CASE WHEN age>18 and age<= 25 THEN  '18-25'
+            WHEN age>25 and age<= 40 THEN  '26-40'
+			WHEN age>40 and age<= 50 THEN  '41-50'
+			WHEN age>50 and age<= 60 THEN  '51-60'
+			ELSE '60+' END AS age_group,
+			gender,
+			id
+FROM [projects].dbo.[Human Resources]) AS t
+GROUP BY age_group,gender
+
+
+--Employees work at headquarters vs Remote location
+SELECT 
+   location,
+   count(id) AS Count
+FROM [projects].dbo.[Human Resources]
+GROUP BY location
+
+--Length of employment of terminated employees in months
+SELECT 
+  id,
+  DATEDIFF(MONTH,hire_date,termdate) AS tenure_months
+FROM [projects].dbo.[Human Resources]
+WHERE termdate is NOT NULL
+
+
+--Gender distibution across departments
+SELECT 
+  department,
+  gender,
+ COUNT(id) AS COUNT
+FROM [projects].dbo.[Human Resources]
+GROUP BY department,gender
+
+--Termination rate of employees by department
+SELECT 
+  department,
+  COUNT(CASE WHEN termdate IS NOT NULL THEN id ELSE NULL END) AS COUNT_OF_TERMNATED_EMPLOYEES,
+  COUNT(id) AS COUNT_OF_Total_EMPLOYEES,
+  (COUNT(CASE WHEN termdate IS NOT NULL THEN id ELSE NULL END))/(COUNT(id)) AS TERMIATION_RATE
+FROM [projects].dbo.[Human Resources]
+GROUP BY department
+
+--How the employees count changed over years based on hiring and termination
+SELECT 
+  year(hire_date) AS YEAR,
+  COUNT(id) AS Total,
+  COUNT(CASE WHEN termdate IS NOT NULL THEN id ELSE NULL END) AS COUNT_OF_TERMNATED_EMPLOYEES,
+  (COUNT(id)) - (COUNT(CASE WHEN termdate IS NOT NULL THEN id ELSE NULL END)) AS  CHANGE
+FROM [projects].dbo.[Human Resources]
+GROUP BY year(hire_date)
